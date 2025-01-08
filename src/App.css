@@ -173,6 +173,10 @@ img {
   margin: 3rem 0;
 }
 
+.mr-6{
+  margin-right: 6px;
+}
+
 /* Grid */
 .grid-2 {
   display: grid;
