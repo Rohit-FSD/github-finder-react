@@ -1,13 +1,18 @@
-import React from "react";
+import React, { Fragment } from "react";
 import "./App.css";
 import Navbar from "./components/layout/Navbar";
 import Users from "./components/users/Users";
 import Search from "./components/users/Search";
 import Alert from "./components/layout/Alert";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import About from "./components/pages/About";
+import User from "./components/users/User";
 
 class App extends React.Component {
   state = {
     users: [],
+    user: {},
+    repos: [],
     loading: false,
     alertState: null,
   };
@@ -28,6 +33,22 @@ class App extends React.Component {
     this.setState({ loading: false, users: data.items });
   };
 
+  getUser = async (userName) => {
+    this.setState({ loading: true });
+    const response = await fetch(`https://api.github.com/users/${userName}`);
+    const data = await response.json();
+    this.setState({ loading: false, user: data });
+  };
+
+  getUserRepos = async (userName) => {
+    this.setState({ loading: true });
+    const response = await fetch(
+      `https://api.github.com/users/${userName}/repos?per_page=5&sort=created:asc`
+    );
+    const data = await response.json();
+    this.setState({ loading: false, repos: data });
+  };
+
   clearUserState = () => this.setState({ loading: false, users: [] });
 
   setAlertState = (msg, type) => {
@@ -38,21 +59,45 @@ class App extends React.Component {
   };
 
   render() {
-    const { users, loading, alertState } = this.state;
+    const { users, loading, alertState, user, repos } = this.state;
     return (
-      <div className="App">
-        <Navbar title="Github Finder" icon="fab fa-github"></Navbar>
-        <div className="container">
-          <Alert alertState={alertState}></Alert>
-          <Search
-            handleSearch={this.getSearchData}
-            clearUsers={this.clearUserState}
-            showClearBtn={!!users.length}
-            setAlertState={this.setAlertState}
-          ></Search>
-          <Users users={users} loading={loading}></Users>
+      <Router>
+        <div className="App">
+          <Navbar title="Github Finder" icon="fab fa-github"></Navbar>
+          <div className="container">
+            <Alert alertState={alertState}></Alert>
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <Fragment>
+                    <Search
+                      handleSearch={this.getSearchData}
+                      clearUsers={this.clearUserState}
+                      showClearBtn={!!users.length}
+                      setAlertState={this.setAlertState}
+                    ></Search>
+                    <Users users={users} loading={loading}></Users>
+                  </Fragment>
+                }
+              ></Route>
+              <Route path="/about" element={<About></About>}></Route>
+              <Route
+                path="/user/:login"
+                element={
+                  <User
+                    getUser={this.getUser}
+                    getUserRepos={this.getUserRepos}
+                    user={user}
+                    repos={repos}
+                    loading={loading}
+                  ></User>
+                }
+              ></Route>
+            </Routes>
+          </div>
         </div>
-      </div>
+      </Router>
     );
   }
 }
